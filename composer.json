@@ -20,8 +20,8 @@
         "zucchi/zucchi": "dev-master",
         "doctrine/doctrine-module": "0.7.*",
         "doctrine/doctrine-orm-module": "0.7.*",
-        "doctrine/data-fixtures": "1.*",
-        "doctrine/mongodb-odm": "1.*",
+        "doctrine/data-fixtures":"1.0.x-dev",
+        "doctrine/mongodb-odm": "dev-master",
         "doctrine/doctrine-mongo-odm-module": "0.7.*",
         "gedmo/doctrine-extensions": "2.3.5"
     },
