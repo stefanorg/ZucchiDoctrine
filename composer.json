@@ -1,5 +1,5 @@
 {
-    "name": "zucchi/doctrine",
+    "name": "stefanorg/doctrine",
     "description": "Zucchi Extensions for Doctrine",
     "type": "library",
     "keywords": [
@@ -8,7 +8,7 @@
         "library",
         "zf2"
     ],
-    "homepage": "https://github.com/zucchi/ZucchiDoctrine",
+    "homepage": "https://github.com/stefanorg/ZucchiDoctrine",
     "authors" : [{
         "name": "Matt Cockayne",
         "email" : "matt@zucchi.co.uk",
