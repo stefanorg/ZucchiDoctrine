@@ -17,7 +17,7 @@
     "license": "BSD-3-Clause",
     "require": {
         "php": ">=5.4.1",
-        "zucchi/zucchi": "dev-master",
+        "stefanorg/zucchi": "dev-master",
         "doctrine/doctrine-module": "0.7.*",
         "doctrine/doctrine-orm-module": "0.7.*",
         "doctrine/data-fixtures":"1.0.x-dev",
