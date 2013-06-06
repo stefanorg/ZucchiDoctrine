@@ -21,6 +21,9 @@ use Doctrine\ORM\Query\Expr;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\DBAL\LockMode;
 
+ use DoctrineORMModule\Paginator\Adapter\DoctrinePaginator as DoctrineAdapter;
+ use Doctrine\ORM\Tools\Pagination\Paginator as ORMPaginator;
+ use Zend\Paginator\Paginator;
 /**
  * Abstract Service
  *
@@ -97,7 +100,41 @@ class AbstractService implements EventManagerAwareInterface
         $class = $this->entityName;
         return new $class();
     }
-    
+    public function getPaginatedList(
+        $where = array(), 
+        $order = array(),
+        $limit = self::INDEX_LIMIT,
+        $offset = self::INDEX_OFFSET,
+        $hydrate = \Doctrine\ORM\Query::HYDRATE_OBJECT,
+        array $options = array()
+        )
+    {
+        if (!$this->entityName) {
+            throw new \RuntimeException('No Entity defined for ' . get_called_class() . ' service');
+        }
+        
+        // allow for hydration to be set to null
+        if ($hydrate == null) {
+            $hydrate = \Doctrine\ORM\Query::HYDRATE_OBJECT;
+        }
+        
+        $em = $this->entityManager;
+        $qb = $em->createQueryBuilder();
+        $qb->select($this->alias)
+           ->from($this->entityName, $this->alias);
+        
+        $this->addWhere($qb, $where)
+             ->addOrder($qb, $order);
+             //->addLimit($qb, $limit, $offset);
+
+        $paginatorAdapter = new DoctrineAdapter(new ORMPaginator($qb));
+
+        $paginator = new Paginator($paginatorAdapter);
+        //$paginator->setDefaultItemCountPerPage(1);
+        
+        //$result = $paginatorAdapter->getItems($offset,$limit);
+        return $paginator;
+    }
     /**
      * Get a list of entities.
      * 
