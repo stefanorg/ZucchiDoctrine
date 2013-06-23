@@ -18,11 +18,11 @@
     "require": {
         "php": ">=5.4.1",
         "stefanorg/zucchi": "dev-master",
-        "doctrine/doctrine-module": "dev-master as 0.7.123",
-        "doctrine/doctrine-orm-module": "dev-master as 0.7.123",
+        "doctrine/doctrine-module": "*",
+        "doctrine/doctrine-orm-module": "*",
         "doctrine/data-fixtures":"1.0.x-dev",
         "doctrine/mongodb-odm": "1.0.x-dev",
-        "doctrine/doctrine-mongo-odm-module": "dev-master",
+        "doctrine/doctrine-mongo-odm-module": "0.7.*",
         "gedmo/doctrine-extensions": "2.3.5"
     },
     "autoload": {
