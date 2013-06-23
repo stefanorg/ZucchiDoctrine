@@ -18,8 +18,8 @@
     "require": {
         "php": ">=5.4.1",
         "stefanorg/zucchi": "dev-master",
-        "doctrine/doctrine-module": "0.7.*",
-        "doctrine/doctrine-orm-module": "0.7.*",
+        "doctrine/doctrine-module": "0.8.x-dev",
+        "doctrine/doctrine-orm-module": "0.8.x-dev",
         "doctrine/data-fixtures":"1.0.x-dev",
         "doctrine/mongodb-odm": "1.0.x-dev",
         "doctrine/doctrine-mongo-odm-module": "0.7.*",
