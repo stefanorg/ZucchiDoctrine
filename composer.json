@@ -20,7 +20,6 @@
         "stefanorg/zucchi": "dev-master",
         "doctrine/data-fixtures":"1.0.x-dev",
         "doctrine/mongodb-odm": "1.0.x-dev",
-        "doctrine/doctrine-mongo-odm-module": "0.7.*",
         "gedmo/doctrine-extensions": "2.3.5"
     },
     "autoload": {
