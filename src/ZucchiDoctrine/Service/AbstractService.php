@@ -91,7 +91,7 @@ class AbstractService implements EventManagerAwareInterface
     }
     public function getRepository()
     {
-        return $this->entityManager->getRepository($this->entityName);
+        return $this->getEntityManager()->getRepository($this->entityName);
     }
     /**
      * Get a new instance of the entity.
