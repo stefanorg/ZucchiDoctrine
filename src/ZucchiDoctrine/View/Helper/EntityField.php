@@ -56,31 +56,34 @@ class EntityField extends AbstractHelper
                 if ($column = $metadata->getFieldMapping($field)) {
                     switch (strtolower($column['type'])) {
                         case "money":
-                            $value = $this->getView()->currencyFormat($value, 'GBP');
+                            $value = $this->getView()->currencyFormat($value, 'EUR', "it_IT");
                             break;
                         case "datetime":
                             $value = $this->getView()->dateFormat(
                                 $value,
                                 \IntlDateFormatter::SHORT,
-                                \IntlDateFormatter::SHORT
+                                \IntlDateFormatter::SHORT,
+                                "it_it"
                             );
                             break;
                         case "date":
                             $value = $this->getView()->dateFormat(
                                 $value,
                                 \IntlDateFormatter::SHORT,
-                                \IntlDateFormatter::NONE
+                                \IntlDateFormatter::NONE,
+                                "it_it"
                             );
                             break;
                         case "time":
                             $value = $this->getView()->dateFormat(
                                 $value,
                                 \IntlDateFormatter::NONE,
-                                \IntlDateFormatter::SHORT
+                                \IntlDateFormatter::SHORT,
+                                "it_it"
                             );
                             break;
                         case 'boolean':
-                            $value = ($value) ? '<span class="true">yes</span>' : '<span class="false">no</span>';
+                            $value = ($value) ? '<span class="true">si</span>' : '<span class="false">no</span>';
                             break;
                     }
                 }
