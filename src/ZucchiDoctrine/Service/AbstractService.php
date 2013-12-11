@@ -262,14 +262,21 @@ class AbstractService implements EventManagerAwareInterface
             if (!is_array($id)) {
                 $id = array($id);
             }
+            //utilizzo l'entity manager per sfruttare le annotazioni e il cascading
+            foreach ($id as $idx) {
+                $entity = $this->get($idx);
+                $this->entityManager->remove($entity);
+                $this->entityManager->flush();
+            }
+            $result = count($id);
+            // $qb = $this->entityManager->createQueryBuilder();
+            // $qb->delete($this->entityName, $this->alias)
+            //    ->where($this->alias . '.' . $this->identifier . ' IN (:ids)')
+            //    ->setParameter('ids', $id);
 
-            $qb = $this->entityManager->createQueryBuilder();
-            $qb->delete($this->entityName, $this->alias)
-               ->where($this->alias . '.' . $this->identifier . ' IN (:ids)')
-               ->setParameter('ids', $id);
-
-            $result = $qb->getQuery()->execute();
+            // $result = $qb->getQuery()->execute();
         }
+        // var_dump($result);die();
 
         return $result;
     }
