@@ -31,6 +31,10 @@ use Zend\Stdlib\Hydrator\ObjectProperty as ObjectPropertyHydrator;
 use ZucchiDoctrine\EntityManager\EntityManagerAwareTrait;
 use Zucchi\ServiceManager\ServiceManagerAwareTrait;
 use ZucchiDoctrine\Entity\AbstractEntity;
+use Zucchi\DateTime\DateTime;
+use Zucchi\DateTime\Date;
+use Zucchi\DateTime\Time;
+
 
 
 /**
@@ -74,15 +78,18 @@ class DoctrineEntity extends ReflectionHydrator
      * @param  object $object
      * @return array
      */
-    public function extract($object)
+    public function extract($object, $depth = 1)
     {
         $result = array();
         foreach (self::getReflProperties($object) as $property) {
+
+            $metaData = $this->entityManager->getClassMetadata(get_class($object));
+
             $propertyName = $property->getName();
 
             $value = $property->getValue($object);
             if ($value instanceof AbstractEntity) {
-                $result[$propertyName] = $value->toArray(true);
+                $result[$propertyName] = $value->toArray($depth);
             } else {
                 $result[$propertyName] = $this->extractValue($propertyName, $value);
             }
@@ -100,22 +107,35 @@ class DoctrineEntity extends ReflectionHydrator
      * @throws \Exception
      * @return object
      */
-    public function hydrate(array $data, $object)
+    public function hydrate(array $data, $object, $depth = 2)
     {
-        $this->metadata = $this->getEntityManager()->getClassMetadata(get_class($object));
+        $metadata = $this->getEntityManager()->getClassMetadata(get_class($object));
 
         // process fields
-        $fields = $this->metadata->getFieldNames();
+        $fields = $metadata->getFieldNames();
         foreach ($fields as $field) {
             if (isset($data[$field]) && $data[$field] !== null) {
-                if (in_array($this->metadata->getTypeOfField($field), array('datetime', 'time', 'date'))) {
-                    if (is_int($data[$field])) {
-                        $dt = new \DateTime();
-                        $dt->setTimestamp($data[$field]);
-                        $data[$field] = $dt;
-                    } elseif (is_string($data[$field])) {
-                        $data[$field] = new \DateTime($data[$field]);
+                $type = $metadata->getTypeOfField($field);
+                if (in_array($type, array('datetime', 'time', 'date'))) {
+                    switch ($type) {
+                        case 'datetime':
+                            $dt = new DateTime();
+                            break;
+                        case 'date':
+                            $dt = new Date();
+                            break;
+                        case 'time':
+                            $dt = new Time();
+                            break;
                     }
+
+                    if (is_int($data[$field])) {
+                        $dt->setTimestamp($data[$field]);
+                    } elseif (is_string($data[$field])) {
+                        $dt->__construct($data[$field]);
+                    }
+
+                    $data[$field] = $dt;
                 }
             } else {
                 unset($data[$field]);
@@ -123,17 +143,28 @@ class DoctrineEntity extends ReflectionHydrator
             }
         }
 
-        // process associations
-        $assocs = $this->metadata->getAssociationNames();
-        foreach($assocs as $assoc) {
-            $target = $this->metadata->getAssociationTargetClass($assoc);
-
-            $value = (isset($data[$assoc])) ? $data[$assoc] : null;
-
-            if ($this->metadata->isSingleValuedAssociation($assoc)) {
-                $data[$assoc] = $this->toOne($value, $target);
-            } elseif ($this->metadata->isCollectionValuedAssociation($assoc)) {
-                $data[$assoc] = $this->toMany($value, $target, $object->{$assoc});
+        if (!$object instanceof \Doctrine\ORM\Proxy\Proxy) {
+            // process associations only if not proxied to prevent mahoosive nesting issues
+            $assocs = $metadata->getAssociationNames();
+            foreach($assocs as $assoc) {
+                $target = $metadata->getAssociationTargetClass($assoc);
+                $value = (isset($data[$assoc])) ? $data[$assoc] : null;
+                switch ($metadata->getAssociationMapping($assoc)['type']) {
+                    case $metadata::ONE_TO_ONE: // 1
+                        $data[$assoc] = $this->toOne($value, $target);
+                        break;
+                    case $metadata::MANY_TO_ONE: // 2
+                        // Not hydrating just linking
+                        $entity = $this->find($target, $value);
+                        $data[$assoc] = $entity;
+                        break;
+                    case $metadata::ONE_TO_MANY: // 4
+                        $data[$assoc] = $this->toMany($value, $target, $object->{$assoc}, $depth);
+                        break;
+                    case $metadata::MANY_TO_MANY: // 8
+                        $data[$assoc] = $this->toMany($value, $target, $object->{$assoc}, $depth);
+                        break;
+                }
             }
         }
 
@@ -159,11 +190,22 @@ class DoctrineEntity extends ReflectionHydrator
             return $valueOrObject;
         }
 
-        $id = (is_array($valueOrObject)) ? $valueOrObject['id'] : $valueOrObject->id;
+        switch (true) {
+            case is_object($valueOrObject):
+                $id = (isset($valueOrObject->id)) ? $valueOrObject->id : 0;
+                break;
 
-        if ($id > 0){
+            case is_array($valueOrObject):
+                $id = (isset($valueOrObject['id']))? $valueOrObject['id'] : 0;
+                break;
+
+            default:
+                $id = 0;
+        }
+
+        if ($id > 0) {
             $entity = $this->find($target, $id);
-        }else{
+        } else {
             $entity = new $target();
         }
 
@@ -175,7 +217,7 @@ class DoctrineEntity extends ReflectionHydrator
      * @param string $target
      * @return array
      */
-    protected function toMany($valueOrObject, $target, Collection $collection = null)
+    protected function toMany($valueOrObject, $target, Collection $collection = null, $depth = 2)
     {
         if (!is_array($valueOrObject) && !$valueOrObject instanceof Traversable) {
             $valueOrObject = (array) $valueOrObject;
@@ -189,10 +231,11 @@ class DoctrineEntity extends ReflectionHydrator
 
         foreach($valueOrObject as $value) {
             if (method_exists($value, 'toArray')) {
-                $value = $value->toArray();
+                $value = $value->toArray($depth);
             } else if (!is_array($value) && !$value instanceof Traversable) {
                 $value = (array) $value;
             }
+
             if (isset($value['id']) &&
                 strlen($value['id']) &&
                 $found = $this->find($target, $value['id'])
